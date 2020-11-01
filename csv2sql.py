@@ -28,6 +28,11 @@ def main():
     with args.csvFile as f:
         reader = csv.reader(f, delimiter=args.delimiter, quoting=csv.QUOTE_ALL)
 
+        #First row define the data type
+        dataTypes=[]
+        for item in next(reader):
+            dataTypes.append(item)
+        print(dataTypes)
         # Create the header row, since we may have to repeat it
         header_row = 'INSERT INTO ' + args.tablename + ' ('
         first = True
@@ -54,17 +59,27 @@ def main():
             first = True
 
             # Loop through the items in each row
+            column=0
             for item in row:
                 if first:
                     first = False
                 else:
                     sys.stdout.write(', ')
-                sys.stdout.write('\'' + item.replace('\'', '\'\'').replace('"', '\'').replace('&', '&.').replace('""', '"') + '\'')
+                if dataTypes[column]=='date':
+                    sys.stdout.write('TO_DATE(' + clear(item) + ',DD/MM/YYYY )')
+                elif dataTypes[column]=='number':
+                    sys.stdout.write(clear(item))
+                else: # Default Varchar
+                    sys.stdout.write('\'' + clear(item) + '\'')
+                column+=1
             sys.stdout.write(')')
             # Increase counter
             counter += 1
 
         sys.stdout.write(';')
+
+def clear(data):
+    return data.replace('\'', '\'\'').replace('"', '\'').replace('&', '&.').replace('""', '"')
 
 if __name__ == "__main__":
     main()
